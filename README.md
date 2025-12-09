@@ -1,4 +1,3 @@
-```markdown
 # Methylated DNA Analysis Tutorial
 
 ## Overview
@@ -11,7 +10,7 @@ When DNA is treated with bisulfite, the C is converted to U (read as T), but the
 
 For this project, a simple analysis is done on a small dataset (GSE205495). Peripheral blood CD4+ T lymphocytes samples were collected from 4 primary refractory ITP cases and 4 age-matched healthy controls, and DNA methylome profiling was performed using Illumina Human Methylation850K.
 
-## Code
+## Pipeline
 
 ```r
 ## ---- Install BiocManager if needed ----
@@ -67,15 +66,19 @@ library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)
 library(RColorBrewer)
 library(stringr)
+```
 
+```r
 # Setting the data directory
 dataDirectory <- "C:/Users/FGN/Downloads/CHIP/GPL"
-
+```
+```r
 # Creating targets dataframe
 According to our dataset:
 GSM6213680–683 → ITP Cases 1–4
 GSM6213684–687 → Controls 1–4
-
+```
+```r
 files <- list.files(dataDirectory, pattern="idat$", full.names=TRUE)
 head(files)
 gsm_ids <- unique(gsub("_(.*)", "", basename(files)))
@@ -88,7 +91,8 @@ targets <- data.frame(
   stringsAsFactors = FALSE
 )
 targets$Basename <- file.path(dataDirectory, targets$Sample_Name)
-
+```
+```r
 targets
 Sample_Name   Sample_Group   Basename
 GSM6213680    Case          path/GSM6213680
@@ -99,7 +103,8 @@ GSM6213684    Control       path/GSM6213684
 GSM6213685    Control       path/GSM6213685
 GSM6213686    Control       path/GSM6213686
 GSM6213687    Control       path/GSM6213687
-
+```
+```r
 # Importing the raw methylation data straight from the array
 RGset <- read.metharray.exp(dataDirectory)
 RGset
@@ -118,17 +123,19 @@ colData names(0):
 Annotation
   array: IlluminaHumanMethylationEPIC
   annotation: ilm10b4.hg19
-
+```
+```r
 Number of type I probes: 142262 
 Number of type II probes: 724574 
 Number of control probes: 635 
 Number of SNP type I probes: 21 
 Number of SNP type II probes: 38 
-
+```
 This object contains the raw red and green intensity values for 1051815 probes, directly from the Illumina EPIC methylation array before any processing.
 Rows = CpG probes on the array which corresponds to: a specific CpG site, or a control probe or a SNP probe
 Columns = samples
 
+```r
 # The object is next turned into MethylSet and converts the red/green signals to methylated and unmethylated labels and intensities (but still raw and unnormalized).
 MSet <- preprocessRaw(RGset)
 MSet
@@ -152,6 +159,8 @@ Preprocessing
 
 head(getMeth(MSet)[,1:3])
 head(getUnmeth(MSet)[,1:3])
+```
+```r
 output:
  head(getMeth(MSet)[,1:3])
            GSM6213680_204027220018_R05C01 GSM6213681_204027220018_R06C01 GSM6213682_204027220018_R07C01
@@ -160,7 +169,7 @@ cg18478105                            541                            549        
 head(getUnmeth(MSet)[,1:3])
            GSM6213680_204027220018_R05C01 GSM6213681_204027220018_R06C01 GSM6213682_204027220018_R07C01
 cg18478105                          14753                          14201                          17334
-
+```
 for example in one sample:
 Meth = 721 
 Unmeth = 17334
@@ -170,6 +179,7 @@ vs
 How brightly the “unmethylated probe” glowed
 It's obvious that the unmethylated probe glowed more. So this specific CpG in this sample is definitely less methylated.
 
+```r
 # Extracting the Beta and M-values
 ratioSet <- ratioConvert(MSet, what = "both", keepCN = TRUE)
 ratioSet
@@ -190,7 +200,7 @@ m <- getM(Gset)
 head(m)
 cn <- getCN(Gset)
 head(cn)
-
+```
 Beta:
 This extracts the beta values = methylation level for each CpG. Beta is calculated as:
 
@@ -220,6 +230,7 @@ CN = \text{Meth} + \text{Unmeth}
 
 it represents how much signal the probe produced. It’s used to detect low-quality probes, hybridization issues, and sometimes copy-number changes because abnormal intensity can indicate extra or missing DNA.
 
+```r
 # Plotting the two medians against each other, good samples tend to cluster together
 qc <- getQC(MSet)
 plotQC(qc)
@@ -228,7 +239,7 @@ plotQC(qc)
 detP <- detectionP(RGset)
 barplot(colMeans(detP), las=2, cex.names=0.8, ylab="Mean detection p-values")
 abline(h=0.05,col="red")
-
+```
 P-value tests whether each probe’s signal is distinguishable from background noise. For each probe in each sample, minfi compares the observed fluorescence intensity vs a background distribution (estimated from negative control probes -> technical noise -> unrelated to biological condition.) It performs a hypothesis test:
 
 - H₀ (null): “This probe’s intensity is just background noise.”
@@ -236,12 +247,14 @@ P-value tests whether each probe’s signal is distinguishable from background n
 
 A low detection p-value → probe signal ≫ background → reliable measurement. A high detection p-value → probe ≈ background → unreliable, probably failed probe.
 
+```r
 # Plotting the beta-value density distribution
 phenoData <- pData(MSet)
 densityPlot(MSet, sampGroups = phenoData$Sample_Group)
-
+```
 The overall density distribution of Beta values for each sample is another useful metric to determine sample quality. Usually, one would expect to see most Beta values to be either close to 0 or 1, indicating most of the CpG sites in the sample are unmethylated or methylated.
 
+```r
 # Preprocessing raw data and visualizing it
 mSetSq <- preprocessFunnorm(RGset)
 par(mfrow=c(1,2))
@@ -251,23 +264,25 @@ typeII <- getProbeInfo(MSet, type = "II")[, c("Name","nCpG")]
 probeTypes <- rbind(typeI, typeII)
 probeTypes$Type <- rep(x = c("I", "II"), times = c(nrow(typeI), nrow(typeII)))
 plotBetasByType(getBeta(mSetSq)[,1], probeTypes = probeTypes, main="Normalized",)
-
+```
 Normalization removes technical differences between Type I and Type II probes, so their beta-value distributions become comparable. In the normalized plot, it should look like the distributions are closer to each other. 
 
 NOTE: There are various normalization methods according to the dataset type. Here we chose `preprocessFunnorm()` since our samples come from different individuals and contain real biological differences.
 
+```r
 # Removing samples with a high p-value
 detP <- detP[match(featureNames(mSetSq),rownames(detP)),]
 keep <- rowSums(detP < 0.01) == ncol(mSetSq)
 table(keep)
 mSetSqFlt <- mSetSq[keep,]
 mSetSqFlt
-
+```
 The probes must be in the same order in the mSetSq and detP objects. We also get rid of values with a high p-value.
 
+```r
 # Removing SNPs
 mSetSqFlt <- dropLociWithSnps(mSetSqFlt)
-
+```
 Because the presence of short nucleotide polymorphisms (or SNPs) inside the probe body can have important consequences on the downstream analysis, minfi offers the possibility to remove such probes with `dropLociWithSnps()` function.
 
 Once normalization & filtering are done, we have clean Beta and M-values. From here, there are four different analysis goals, each using different aspects of the data.
@@ -468,9 +483,4 @@ GO:2000378       BP negative regulation of reactive oxygen species metabolic pro
 GO:0097120       BP                                 receptor localization to synapse 62 13 1.787221e-04 0.57482131
 GO:1904020       BP         regulation of G protein-coupled receptor internalization  3  3 2.735938e-04 0.73259709
 GO:0005587       CC                                          collagen type IV trimer  6  4 3.101745e-04 0.73259709
-```
-
-## Conclusion
-
-This tutorial provides a comprehensive introduction to analyzing DNA methylation data using the Illumina Human Methylation850K array.
 ```
