@@ -70,7 +70,7 @@ library(stringr)
 
 ```r
 # Setting the data directory
-dataDirectory <- "C:/Users/FGN/Downloads/CHIP/GPL"
+dataDirectory <- "path/GPL"
 ```
 ```r
 # Creating targets dataframe
@@ -201,33 +201,52 @@ head(m)
 cn <- getCN(Gset)
 head(cn)
 ```
-Beta:
-This extracts the beta values = methylation level for each CpG. Beta is calculated as:
+Beta
 
-\[
+This extracts the beta values = methylation level for each CpG.
+Beta is calculated as:
+
+
+Here is your text rewritten in **GitHub-compatible Markdown**, with math formatted using GitHub’s LaTeX syntax and clean spacing.
+
+## **Beta**
+
+This extracts the **beta values** = methylation level for each CpG.
+Beta is calculated as:
+
+```math
 \text{Beta} = \frac{\text{Meth}}{\text{Meth} + \text{Unmeth}} \times 100
-\]
+```
 
-Ranges from 0 (unmethylated) to 1 (fully methylated). Example:
+Ranges from **0 (unmethylated)** to **1 (fully methylated)**.
 
+**Example:**
+
+```
 cg13869341   0.877   0.774   0.798
-Meaning: this CpG is very highly methylated in those samples.
+```
 
-M:
-This extracts M-values, which represent:
+Meaning: this CpG is **very highly methylated** in those samples.
 
-\[
+## **M**
+
+This extracts **M-values**, which represent:
+
+```math
 M = \log_2\left(\frac{\text{Meth}}{\text{Unmeth}}\right)
-\]
+```
 
-Used for statistical tests (DESeq-like). Positive M → more methylated, Negative M → less methylated.
+Used for statistical tests (similar to DESeq).
+**Positive M → more methylated**
+**Negative M → less methylated**
 
-C:
-This extracts copy number estimates, basically:
-\[
+## **C**
+
+This extracts **copy number estimates**, defined as:
+
+```math
 CN = \text{Meth} + \text{Unmeth}
-\]
-
+```
 it represents how much signal the probe produced. It’s used to detect low-quality probes, hybridization issues, and sometimes copy-number changes because abnormal intensity can indicate extra or missing DNA.
 
 ```r
@@ -240,6 +259,11 @@ detP <- detectionP(RGset)
 barplot(colMeans(detP), las=2, cex.names=0.8, ylab="Mean detection p-values")
 abline(h=0.05,col="red")
 ```
+<p float="left">
+  <img src="results/1.png" width="45%" />
+  <img src="results/2.png" width="45%" />
+</p>
+
 P-value tests whether each probe’s signal is distinguishable from background noise. For each probe in each sample, minfi compares the observed fluorescence intensity vs a background distribution (estimated from negative control probes -> technical noise -> unrelated to biological condition.) It performs a hypothesis test:
 
 - H₀ (null): “This probe’s intensity is just background noise.”
@@ -265,6 +289,10 @@ probeTypes <- rbind(typeI, typeII)
 probeTypes$Type <- rep(x = c("I", "II"), times = c(nrow(typeI), nrow(typeII)))
 plotBetasByType(getBeta(mSetSq)[,1], probeTypes = probeTypes, main="Normalized",)
 ```
+<p>
+  <img src="results/3.png" width="50%" />
+</p>
+
 Normalization removes technical differences between Type I and Type II probes, so their beta-value distributions become comparable. In the normalized plot, it should look like the distributions are closer to each other. 
 
 NOTE: There are various normalization methods according to the dataset type. Here we chose `preprocessFunnorm()` since our samples come from different individuals and contain real biological differences.
@@ -471,7 +499,8 @@ gst_GO <- gometh(
   all.cpg = allCpGs,
   collection = "GO"
 )
-
+```
+```r
 > topGSA(gst_GO, number = 10)
            ONTOLOGY                                                             TERM  N DE         P.DE        FDR
 GO:0045915       BP           positive regulation of catecholamine metabolic process  6  5 6.271948e-06 0.07060331
